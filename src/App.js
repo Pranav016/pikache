@@ -1,25 +1,37 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import PokemonList from './PokemonList';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+	const [Pokemon, setPokemon] = useState([]);
+	const [CurrentPageUrl, setCurrentPageUrl] = useState(
+		'https://pokeapi.co/api/v2/pokemon/'
+	);
+	const [PreviousPageUrl, setPreviousPageUrl] = useState();
+	const [NextPageUrl, setNextPageUrl] = useState();
+	const [Loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		setLoading(true);
+		let cancel;
+		axios
+			.get(CurrentPageUrl, {
+				cancelToken: new axios.cancelToken((c) => (cancel = c)),
+			})
+			.then((response) => {
+				setLoading(false);
+				setPreviousPageUrl(response.data.previous);
+				setNextPageUrl(response.data.next);
+				setPokemon(response.data.results.map((p) => p.name));
+			});
+
+		// cleanup function
+		return () => cancel();
+	}, [CurrentPageUrl]);
+
+	if (Loading) return 'Loading...';
+
+	return <PokemonList pokemon={Pokemon} />;
 }
 
 export default App;
